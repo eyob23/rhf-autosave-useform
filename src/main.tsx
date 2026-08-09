@@ -14,40 +14,47 @@ import { AutoSaveStatusProvider } from "./rhf-autosave";
 import { store } from "./store";
 import "./styles.css";
 
-const router = createBrowserRouter([
-  { path: "/", element: <FormsDashboard /> },
-  {
-    path: "/applications/:applicationId",
-    element: <AppLayout />,
-    errorElement: <RouteErrorBoundary />,
-    children: [
-      { index: true, element: <RootRedirect /> },
-      { path: "personal", element: <PersonalSection /> },
-      { path: "employment", element: <EmploymentSection /> },
-      { path: "education", element: <EducationSection /> },
-      { path: "references", element: <ReferencesSection /> },
-    ],
-  },
-  {
-    path: "/applications/:applicationId/view",
-    element: <AppLayout />,
-    errorElement: <RouteErrorBoundary />,
-    children: [
-      { index: true, element: <RootRedirect /> },
-      { path: "personal", element: <PersonalSection /> },
-      { path: "employment", element: <EmploymentSection /> },
-      { path: "education", element: <EducationSection /> },
-      { path: "references", element: <ReferencesSection /> },
-    ],
-  },
-]);
+const router = createBrowserRouter(
+  [
+    { path: "/", element: <FormsDashboard /> },
+    {
+      path: "/applications/:applicationId",
+      element: <AppLayout />,
+      errorElement: <RouteErrorBoundary />,
+      children: [
+        { index: true, element: <RootRedirect /> },
+        { path: "personal", element: <PersonalSection /> },
+        { path: "employment", element: <EmploymentSection /> },
+        { path: "education", element: <EducationSection /> },
+        { path: "references", element: <ReferencesSection /> },
+      ],
+    },
+    {
+      path: "/applications/:applicationId/view",
+      element: <AppLayout />,
+      errorElement: <RouteErrorBoundary />,
+      children: [
+        { index: true, element: <RootRedirect /> },
+        { path: "personal", element: <PersonalSection /> },
+        { path: "employment", element: <EmploymentSection /> },
+        { path: "education", element: <EducationSection /> },
+        { path: "references", element: <ReferencesSection /> },
+      ],
+    },
+  ],
+  { basename: import.meta.env.BASE_URL },
+);
+
+const showApiSimulation =
+  import.meta.env.DEV ||
+  import.meta.env.VITE_ENABLE_API_SIMULATOR === "true";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <AutoSaveStatusProvider>
         <RouterProvider router={router} />
-        {import.meta.env.DEV && <ApiSimulationPanel />}
+        {showApiSimulation && <ApiSimulationPanel />}
       </AutoSaveStatusProvider>
     </Provider>
   </React.StrictMode>,
