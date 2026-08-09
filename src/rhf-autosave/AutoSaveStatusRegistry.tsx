@@ -91,6 +91,12 @@ function getEventType(
   return null;
 }
 
+/**
+ * Provide global autosave status tracking for registered controllers.
+ *
+ * The provider keeps active controllers plus retained snapshots for routes
+ * that unmount, and also stores a bounded session event log.
+ */
 export function AutoSaveStatusProvider({
   children,
   maxLogEntries = 200,
@@ -199,6 +205,8 @@ export function AutoSaveStatusProvider({
           if (current.get(statusKey)?.token !== token) return current;
           const next = new Map(current);
           if (retainOnUnmount) {
+            // Keep the last snapshot around so the dashboard can show what the
+            // autosave was doing even after the form route unmounts.
             next.set(statusKey, {
               controller: null,
               isActive: false,
@@ -235,6 +243,12 @@ type RegistrationProps = {
   retainOnUnmount?: boolean;
 };
 
+/**
+ * Register an autosave controller with the shared status registry.
+ *
+ * Use a stable status key so headers, dashboards, and logs can refer to the
+ * same form or section across route transitions.
+ */
 export function AutoSaveStatusRegistration({
   statusKey,
   controller,
@@ -256,6 +270,9 @@ type RegisteredStatusProps = {
   fallback?: ReactNode;
 };
 
+/**
+ * Render the live autosave status for a registered form key.
+ */
 export function RegisteredAutoSaveStatus({
   statusKey,
   fallback = null,
@@ -266,6 +283,9 @@ export function RegisteredAutoSaveStatus({
   return controller ? <AutoSaveStatus controller={controller} /> : fallback;
 }
 
+/**
+ * Read the active and retained autosave registrations for custom dashboards.
+ */
 export function useTrackedAutoSaves(): TrackedAutoSave[] {
   const { controllers } = useRegistry();
 
@@ -286,6 +306,9 @@ type AutoSaveLogOptions = {
   limit?: number;
 };
 
+/**
+ * Read the session autosave activity log, optionally filtered to one key.
+ */
 export function useAutoSaveLog({
   statusKey,
   limit,
@@ -300,6 +323,9 @@ export function useAutoSaveLog({
   }, [events, limit, statusKey]);
 }
 
+/**
+ * Clear the session autosave log, or only entries for one status key.
+ */
 export function useClearAutoSaveLog(statusKey?: string) {
   const { clearLog } = useRegistry();
   return useCallback(() => clearLog(statusKey), [clearLog, statusKey]);

@@ -48,6 +48,12 @@ const defaultFormatError = (error: unknown) => {
   return "Autosave failed";
 };
 
+/**
+ * Create an autosave controller for a React Hook Form instance.
+ *
+ * The controller debounces edits, serializes requests, aborts on unmount,
+ * and exposes status snapshots that can be rendered anywhere in the app.
+ */
 export function useAutoSave<T extends FieldValues>({
   form,
   save,
@@ -101,6 +107,8 @@ export function useAutoSave<T extends FieldValues>({
       return;
     }
 
+    // Capture the latest form values once per save attempt so retries and
+    // overlapping edits do not read a moving target.
     const targetRevision = revisionRef.current;
     let values: T;
     try {
@@ -215,6 +223,7 @@ export function useAutoSave<T extends FieldValues>({
 
   const scheduleSave = useCallback(() => {
     cancelTimer();
+    // Debounce the next autosave instead of spawning a save for every keystroke.
     const saveDueAt = Date.now() + debounceMs;
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
@@ -256,6 +265,7 @@ export function useAutoSave<T extends FieldValues>({
       savedRevisionRef.current < revisionRef.current &&
       !inFlightRef.current
     ) {
+      // beforeunload/pagehide can only ask for a best-effort final save.
       void saveLatest().catch(() => {
         // Best effort only. beforeunload provides the actual safety net.
       });
@@ -279,6 +289,8 @@ export function useAutoSave<T extends FieldValues>({
       callback: () => {
         if (!initializedRef.current || disposedRef.current) return;
 
+        // Track each new form revision so the controller can decide whether a
+        // newer edit arrived while the previous save was still in flight.
         revisionRef.current += 1;
         scheduleSave();
       },

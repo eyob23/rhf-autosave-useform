@@ -17,6 +17,12 @@ type Props<T extends FieldValues> = PropsWithChildren<{
   retainStatusOnUnmount?: boolean;
 }>;
 
+/**
+ * Wrap a routed form with React Hook Form context plus autosave exit guards.
+ *
+ * When a status key is provided, the controller is also registered for global
+ * status and retained-session dashboards.
+ */
 export function AutoSaveForm<T extends FieldValues>({
   form,
   controller,

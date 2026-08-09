@@ -6,6 +6,10 @@ import "./NavigationGuard.css";
 
 type Props = { controller: AutoSaveController };
 
+/**
+ * Block route changes until pending autosave work is flushed or the user
+ * explicitly chooses to stay on the current page.
+ */
 export function NavigationGuard({ controller }: Props) {
   const flushingRef = useRef(false);
   const waitingForRetryRef = useRef(false);
@@ -63,12 +67,14 @@ export function NavigationGuard({ controller }: Props) {
 
   const hasError = snapshot.state === "error";
   const stayHere = () => {
+    // Cancel this navigation attempt so a later save completion cannot resume it.
     attemptRef.current += 1;
     flushingRef.current = false;
     waitingForRetryRef.current = false;
     blocker.reset();
   };
   const retryAndContinue = () => {
+    // Retry keeps the navigation blocked until the autosave succeeds.
     waitingForRetryRef.current = true;
     void controller.retry().catch(() => {
       // The controller publishes the error for this notice and status UI.

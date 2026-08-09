@@ -24,6 +24,13 @@ type Options<T extends FieldValues> = Omit<
   isEqual?: (current: T, next: T) => boolean;
 };
 
+/**
+ * Create a React Hook Form instance wired to autosave and refresh-safe
+ * server values.
+ *
+ * This hook owns the form, initializes the autosave controller after server
+ * data is reset, and preserves dirty local edits when fresh values arrive.
+ */
 export function useAutoSaveForm<T extends FieldValues>({
   defaultValues,
   values,
