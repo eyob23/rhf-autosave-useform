@@ -38,9 +38,6 @@ jobs:
         env:
           VITE_ENABLE_API_SIMULATOR: "true"
 
-      - name: Add single-page app fallback
-        run: cp dist/index.html dist/404.html
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
