@@ -227,6 +227,27 @@ clears the complete session log. For custom presentation, use
 The package emits `change-detected`, `save-started`, `retry-started`,
 `save-succeeded`, `save-failed`, and `save-cancelled` event types.
 
+## Testing failure scenarios
+
+The demo includes an API simulation button in the lower-right corner during
+development. It changes the in-memory mock API, so browser network throttling
+or DevTools offline mode is not required.
+
+Available scenarios:
+
+- **Normal** uses the standard 650 ms save latency.
+- **Slow response** waits 5 seconds before saving.
+- **Request timeout** waits 20 seconds, exceeding the autosave timeout.
+- **Offline** rejects requests with a network-unavailable error.
+- **Server error** rejects requests with a simulated HTTP 500 error.
+- **Flaky connection** fails according to the adjustable failure rate.
+
+Use **Fail next save** for a deterministic one-time failure followed by normal
+recovery. **Affect read requests** applies the selected scenario to loading as
+well as saving; it is disabled by default so forms remain available while save
+behavior is tested. Settings persist in `sessionStorage` until reset or the
+browser session ends. Failed and aborted requests never modify the mock data.
+
 ## React Router
 
 Use `AutoSaveForm` when the form is rendered inside React Router. It provides

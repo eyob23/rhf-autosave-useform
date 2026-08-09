@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppLayout, RootRedirect } from "./App";
 import { FormsDashboard } from "./components/FormsDashboard";
+import { ApiSimulationPanel } from "./components/ApiSimulationPanel";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { EducationSection } from "./sections/EducationSection";
 import { EmploymentSection } from "./sections/EmploymentSection";
@@ -46,6 +47,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <AutoSaveStatusProvider>
         <RouterProvider router={router} />
+        {import.meta.env.DEV && <ApiSimulationPanel />}
       </AutoSaveStatusProvider>
     </Provider>
   </React.StrictMode>,

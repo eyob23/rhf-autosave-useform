@@ -9,6 +9,29 @@ import {
 
 type UpdateArgs<T> = { applicationId: string; values: T };
 
+function normalizeApiError(error: unknown) {
+  const candidate = error as { message?: unknown; status?: unknown } | null;
+  const status =
+    typeof candidate?.status === "number" ||
+    typeof candidate?.status === "string"
+      ? candidate.status
+      : "SIMULATED_ERROR";
+  const message =
+    typeof candidate?.message === "string"
+      ? candidate.message
+      : "The simulated API request failed.";
+
+  return { status, data: { message } };
+}
+
+async function queryData<T>(request: Promise<T>) {
+  try {
+    return { data: await request };
+  } catch (error) {
+    return { error: normalizeApiError(error) };
+  }
+}
+
 export const applicationApi = createApi({
   reducerPath: "applicationApi",
   baseQuery: fakeBaseQuery<unknown>(),
@@ -18,7 +41,8 @@ export const applicationApi = createApi({
       Awaited<ReturnType<typeof mockApi.listApplications>>,
       void
     >({
-      queryFn: async () => ({ data: await mockApi.listApplications() }),
+      queryFn: (_argument, api) =>
+        queryData(mockApi.listApplications(api.signal)),
       providesTags: ["Applications"],
     }),
     createApplication: builder.mutation<
@@ -36,9 +60,8 @@ export const applicationApi = createApi({
       invalidatesTags: ["Applications"],
     }),
     getPersonal: builder.query<PersonalForm, string>({
-      queryFn: async (applicationId) => ({
-        data: await mockApi.getPersonal(applicationId),
-      }),
+      queryFn: (applicationId, api) =>
+        queryData(mockApi.getPersonal(applicationId, api.signal)),
     }),
     updatePersonal: builder.mutation<void, UpdateArgs<PersonalForm>>({
       queryFn: async ({ applicationId, values }, api) => {
@@ -46,7 +69,7 @@ export const applicationApi = createApi({
           await mockApi.savePersonal(applicationId, values, api.signal);
           return { data: undefined };
         } catch (error) {
-          return { error };
+          return { error: normalizeApiError(error) };
         }
       },
       onQueryStarted: async (
@@ -70,9 +93,8 @@ export const applicationApi = createApi({
       invalidatesTags: ["Applications"],
     }),
     getEmployment: builder.query<EmploymentForm, string>({
-      queryFn: async (applicationId) => ({
-        data: await mockApi.getEmployment(applicationId),
-      }),
+      queryFn: (applicationId, api) =>
+        queryData(mockApi.getEmployment(applicationId, api.signal)),
     }),
     updateEmployment: builder.mutation<void, UpdateArgs<EmploymentForm>>({
       queryFn: async ({ applicationId, values }, api) => {
@@ -80,7 +102,7 @@ export const applicationApi = createApi({
           await mockApi.saveEmployment(applicationId, values, api.signal);
           return { data: undefined };
         } catch (error) {
-          return { error };
+          return { error: normalizeApiError(error) };
         }
       },
       onQueryStarted: async (
@@ -104,9 +126,8 @@ export const applicationApi = createApi({
       invalidatesTags: ["Applications"],
     }),
     getEducation: builder.query<EducationForm, string>({
-      queryFn: async (applicationId) => ({
-        data: await mockApi.getEducation(applicationId),
-      }),
+      queryFn: (applicationId, api) =>
+        queryData(mockApi.getEducation(applicationId, api.signal)),
     }),
     updateEducation: builder.mutation<void, UpdateArgs<EducationForm>>({
       queryFn: async ({ applicationId, values }, api) => {
@@ -114,7 +135,7 @@ export const applicationApi = createApi({
           await mockApi.saveEducation(applicationId, values, api.signal);
           return { data: undefined };
         } catch (error) {
-          return { error };
+          return { error: normalizeApiError(error) };
         }
       },
       onQueryStarted: async (
@@ -138,9 +159,8 @@ export const applicationApi = createApi({
       invalidatesTags: ["Applications"],
     }),
     getReferences: builder.query<ReferencesForm, string>({
-      queryFn: async (applicationId) => ({
-        data: await mockApi.getReferences(applicationId),
-      }),
+      queryFn: (applicationId, api) =>
+        queryData(mockApi.getReferences(applicationId, api.signal)),
     }),
     updateReferences: builder.mutation<void, UpdateArgs<ReferencesForm>>({
       queryFn: async ({ applicationId, values }, api) => {
@@ -148,7 +168,7 @@ export const applicationApi = createApi({
           await mockApi.saveReferences(applicationId, values, api.signal);
           return { data: undefined };
         } catch (error) {
-          return { error };
+          return { error: normalizeApiError(error) };
         }
       },
       onQueryStarted: async (

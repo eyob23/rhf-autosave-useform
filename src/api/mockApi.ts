@@ -8,6 +8,7 @@ import {
   type PersonalForm,
   type ReferencesForm,
 } from "./forms";
+import { runSimulatedRequest } from "./simulation";
 
 export type {
   EducationForm,
@@ -250,22 +251,31 @@ const getApplication = (applicationId: string) => {
 const getSection = async <K extends keyof ApplicationRecord>(
   applicationId: string,
   section: K,
-) => {
-  await sleep(250);
-  return structuredClone(getApplication(applicationId)[section]);
-};
+  signal?: AbortSignal,
+) =>
+  runSimulatedRequest(
+    "read",
+    signal,
+    () => structuredClone(getApplication(applicationId)[section]),
+    250,
+  );
 
 const saveSection = async <K extends keyof ApplicationRecord>(
   applicationId: string,
   section: K,
   data: ApplicationRecord[K],
   signal: AbortSignal,
-) => {
-  await sleep(650, signal);
-  const application = getApplication(applicationId);
-  application[section] = structuredClone(data);
-  application.updatedAt = new Date().toISOString();
-};
+) =>
+  runSimulatedRequest(
+    "save",
+    signal,
+    () => {
+      const application = getApplication(applicationId);
+      application[section] = structuredClone(data);
+      application.updatedAt = new Date().toISOString();
+    },
+    650,
+  );
 
 const toSummary = (application: ApplicationRecord): ApplicationSummary => ({
   id: application.id,
@@ -279,12 +289,16 @@ const toSummary = (application: ApplicationRecord): ApplicationSummary => ({
 });
 
 export const mockApi = {
-  listApplications: async () => {
-    await sleep(250);
-    return Array.from(db.values(), toSummary).sort((first, second) =>
-      second.updatedAt.localeCompare(first.updatedAt),
-    );
-  },
+  listApplications: (signal?: AbortSignal) =>
+    runSimulatedRequest(
+      "read",
+      signal,
+      () =>
+        Array.from(db.values(), toSummary).sort((first, second) =>
+          second.updatedAt.localeCompare(first.updatedAt),
+        ),
+      250,
+    ),
   createApplication: async () => {
     await sleep(250);
     const applicationId = `application-${crypto.randomUUID().slice(0, 8)}`;
@@ -301,28 +315,29 @@ export const mockApi = {
     await sleep(250);
     db.delete(applicationId);
   },
-  getPersonal: (applicationId: string) => getSection(applicationId, "personal"),
+  getPersonal: (applicationId: string, signal?: AbortSignal) =>
+    getSection(applicationId, "personal", signal),
   savePersonal: (
     applicationId: string,
     data: PersonalForm,
     signal: AbortSignal,
   ) => saveSection(applicationId, "personal", data, signal),
-  getEmployment: (applicationId: string) =>
-    getSection(applicationId, "employment"),
+  getEmployment: (applicationId: string, signal?: AbortSignal) =>
+    getSection(applicationId, "employment", signal),
   saveEmployment: (
     applicationId: string,
     data: EmploymentForm,
     signal: AbortSignal,
   ) => saveSection(applicationId, "employment", data, signal),
-  getEducation: (applicationId: string) =>
-    getSection(applicationId, "education"),
+  getEducation: (applicationId: string, signal?: AbortSignal) =>
+    getSection(applicationId, "education", signal),
   saveEducation: (
     applicationId: string,
     data: EducationForm,
     signal: AbortSignal,
   ) => saveSection(applicationId, "education", data, signal),
-  getReferences: (applicationId: string) =>
-    getSection(applicationId, "references"),
+  getReferences: (applicationId: string, signal?: AbortSignal) =>
+    getSection(applicationId, "references", signal),
   saveReferences: (
     applicationId: string,
     data: ReferencesForm,
