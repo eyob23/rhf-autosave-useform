@@ -32,6 +32,15 @@ import {
 } from "rhf-autosave";
 
 type ProfileForm = {
+
+When navigation is attempted with unsaved changes, `NavigationGuard` displays
+a fixed notice while it flushes the form. Successful saves continue to the
+requested destination automatically. Failed saves explain why navigation is
+paused and provide **Retry and continue** and **Stay here** actions. The notice
+can be themed with `--rhf-autosave-navigation-color`,
+`--rhf-autosave-navigation-background`,
+`--rhf-autosave-navigation-border`, and the shared autosave error/progress
+color variables.
   firstName: string;
   email: string;
 };

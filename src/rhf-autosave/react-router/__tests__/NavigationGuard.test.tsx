@@ -9,12 +9,23 @@ import {
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { createMemoryRouter, Link, RouterProvider } from "react-router-dom";
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AutoSaveStatus } from "../../AutoSaveStatus";
 import { useAutoSave } from "../../useAutoSave";
 import { NavigationGuard } from "../NavigationGuard";
 
 type Values = { name: string };
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
 
 function Editor({
   save,
@@ -63,16 +74,75 @@ describe("NavigationGuard", () => {
     });
     fireEvent.click(screen.getByRole("link", { name: "Leave editor" }));
 
-    expect(await screen.findByRole("alert")).toBeTruthy();
+    const notice = await screen.findByRole("alertdialog", {
+      name: "Navigation paused: changes weren't saved",
+    });
+    expect(notice.textContent).toContain("Service unavailable");
     expect(router.state.location.pathname).toBe("/edit");
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry and continue" }));
 
     expect(
       await screen.findByRole("heading", { name: "Destination" }),
     ).toBeTruthy();
     expect(save).toHaveBeenCalledTimes(2);
+  });
+
+  it("explains that navigation is waiting for an in-flight save", async () => {
+    const pendingSave = deferred<void>();
+    const save = vi.fn(() => pendingSave.promise);
+    const router = createMemoryRouter(
+      [
+        { path: "/edit", element: <Editor save={save} /> },
+        { path: "/destination", element: <h1>Destination</h1> },
+      ],
+      { initialEntries: ["/edit"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Name" }), {
+      target: { value: "Grace" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "Leave editor" }));
+
+    expect(
+      await screen.findByText("Saving changes before leaving"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Your destination will open as soon as the save completes.",
+      ),
+    ).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/edit");
+
+    await act(async () => pendingSave.resolve());
+    expect(
+      await screen.findByRole("heading", { name: "Destination" }),
+    ).toBeTruthy();
+  });
+
+  it("stays on the form when the blocked navigation is cancelled", async () => {
+    const pendingSave = deferred<void>();
+    const save = vi.fn(() => pendingSave.promise);
+    const router = createMemoryRouter(
+      [
+        { path: "/edit", element: <Editor save={save} /> },
+        { path: "/destination", element: <h1>Destination</h1> },
+      ],
+      { initialEntries: ["/edit"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Name" }), {
+      target: { value: "Grace" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "Leave editor" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Stay here" }));
+
+    await act(async () => pendingSave.resolve());
+    expect(router.state.location.pathname).toBe("/edit");
+    expect(screen.queryByText("Saving changes before leaving")).toBeNull();
   });
 
   it("flushes before same-path query navigation", async () => {
