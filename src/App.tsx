@@ -11,7 +11,7 @@ import {
   applicationAutoSaveStatusKey,
   applicationSectionNames,
 } from "./integrations/applicationAutosave";
-import { RegisteredAutoSaveStatus } from "./rhf-autosave";
+import { AutoSaveEventLog, RegisteredAutoSaveStatus } from "./rhf-autosave";
 import { useIsViewMode } from "./useApplicationMode";
 
 export function AppLayout() {
@@ -22,6 +22,10 @@ export function AppLayout() {
     applicationSectionNames.find((section) =>
       pathname.endsWith(`/${section}`),
     ) ?? "personal";
+  const activeStatusKey = applicationAutoSaveStatusKey(
+    applicationId ?? "",
+    activeSection,
+  );
 
   return (
     <main className="shell">
@@ -39,10 +43,7 @@ export function AppLayout() {
           </span>
           {!isViewMode && (
             <RegisteredAutoSaveStatus
-              statusKey={applicationAutoSaveStatusKey(
-                applicationId ?? "",
-                activeSection,
-              )}
+              statusKey={activeStatusKey}
               fallback={<span className="save-status muted">Ready</span>}
             />
           )}
@@ -61,6 +62,15 @@ export function AppLayout() {
         </nav>
         <div className={`content ${isViewMode ? "view-mode" : ""}`}>
           <Outlet key={applicationId} />
+          {!isViewMode && (
+            <AutoSaveEventLog
+              className="section-autosave-log"
+              statusKey={activeStatusKey}
+              title="Section autosave activity"
+              eyebrow="Developer log"
+              limit={10}
+            />
+          )}
         </div>
       </div>
     </main>

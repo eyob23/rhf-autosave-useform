@@ -16,7 +16,7 @@ import {
   useGetApplicationsQuery,
 } from "../api/service";
 import type { ApplicationStatus, ApplicationSummary } from "../api/mockApi";
-import { TrackedAutoSaveList } from "../rhf-autosave";
+import { AutoSaveEventLog, TrackedAutoSaveList } from "../rhf-autosave";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",
@@ -234,6 +234,12 @@ export function FormsDashboard() {
         className="dashboard-autosave-tracker"
         eyebrow="This browser session"
         emptyMessage="Autosaves appear here after you edit an application section."
+      />
+
+      <AutoSaveEventLog
+        className="dashboard-autosave-log"
+        eyebrow="Developer log"
+        emptyMessage="Autosave events appear here as forms are edited."
       />
 
       <section className="dashboard-tools" aria-label="Filter forms">

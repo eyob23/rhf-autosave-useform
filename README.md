@@ -121,7 +121,7 @@ Wrap the shared component tree once:
 import { AutoSaveStatusProvider } from "rhf-autosave";
 
 root.render(
-  <AutoSaveStatusProvider>
+  <AutoSaveStatusProvider maxLogEntries={200}>
     <App />
   </AutoSaveStatusProvider>,
 );
@@ -195,6 +195,37 @@ function AutosaveDashboard() {
   );
 }
 ```
+
+## Autosave activity log
+
+`AutoSaveStatusProvider` keeps a structured, browser-session log of controller
+state transitions. It records keys, labels, timestamps, durations, and
+normalized errors, but never form values. `maxLogEntries` bounds memory usage
+and defaults to 200.
+
+Display all events on a dashboard:
+
+```tsx
+import { AutoSaveEventLog } from "rhf-autosave";
+
+<AutoSaveEventLog eyebrow="Developer log" />
+```
+
+Filter the same log for a specific form or section:
+
+```tsx
+<AutoSaveEventLog
+  statusKey={`profile:${profileId}`}
+  title="Profile autosave activity"
+  limit={10}
+/>
+```
+
+Each filtered component clears only its own history. An unfiltered component
+clears the complete session log. For custom presentation, use
+`useAutoSaveLog({ statusKey, limit })` and `useClearAutoSaveLog(statusKey)`.
+The package emits `change-detected`, `save-started`, `retry-started`,
+`save-succeeded`, `save-failed`, and `save-cancelled` event types.
 
 ## React Router
 

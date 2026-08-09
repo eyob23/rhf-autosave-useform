@@ -1,0 +1,168 @@
+.rhf-autosave-log {
+  color: var(--rhf-autosave-color, #17211c);
+  border: 1px solid var(--rhf-autosave-border-color, #d5dbd4);
+  background: var(--rhf-autosave-background, rgba(255, 255, 255, 0.78));
+}
+
+.rhf-autosave-log__heading {
+  min-height: 70px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--rhf-autosave-border-color, #e0e5df);
+}
+
+.rhf-autosave-log__heading h2 {
+  margin: 0;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.rhf-autosave-log__eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--rhf-autosave-accent-color, #176b4d);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rhf-autosave-log__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rhf-autosave-log__actions strong {
+  min-width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--rhf-autosave-color, #17211c);
+  font-size: 12px;
+}
+
+.rhf-autosave-log__actions button {
+  padding: 5px 0;
+  border: 0;
+  color: var(--rhf-autosave-accent-color, #176b4d);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.rhf-autosave-log__empty {
+  margin: 0;
+  padding: 18px;
+  color: var(--rhf-autosave-muted-color, #707c75);
+  font-size: 13px;
+}
+
+.rhf-autosave-log__list {
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.rhf-autosave-log__list li {
+  min-height: 52px;
+  padding: 10px 18px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.rhf-autosave-log__list li + li {
+  border-top: 1px solid var(--rhf-autosave-divider-color, #e8ece8);
+}
+
+.rhf-autosave-log__marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rhf-autosave-muted-color, #829087);
+}
+
+.rhf-autosave-log__marker.is-save-succeeded {
+  background: var(--rhf-autosave-success-color, #176b4d);
+}
+
+.rhf-autosave-log__marker.is-save-failed {
+  background: var(--rhf-autosave-error-color, #a33227);
+}
+
+.rhf-autosave-log__marker.is-save-started,
+.rhf-autosave-log__marker.is-retry-started {
+  background: var(--rhf-autosave-progress-color, #175779);
+}
+
+.rhf-autosave-log__event {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.rhf-autosave-log__event > div {
+  min-width: 0;
+}
+
+.rhf-autosave-log__event strong,
+.rhf-autosave-log__event span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.rhf-autosave-log__event > div span,
+.rhf-autosave-log__detail,
+.rhf-autosave-log__list time {
+  color: var(--rhf-autosave-muted-color, #707c75);
+}
+
+.rhf-autosave-log__detail {
+  text-align: right;
+}
+
+.rhf-autosave-log__list time {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .rhf-autosave-log__heading {
+    align-items: flex-start;
+  }
+
+  .rhf-autosave-log__actions {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .rhf-autosave-log__list li {
+    grid-template-columns: 8px minmax(0, 1fr);
+  }
+
+  .rhf-autosave-log__event {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .rhf-autosave-log__detail {
+    text-align: left;
+  }
+
+  .rhf-autosave-log__list time {
+    grid-column: 2;
+  }
+}

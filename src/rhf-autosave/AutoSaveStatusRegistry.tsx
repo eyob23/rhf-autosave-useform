@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { AutoSaveStatus } from "./AutoSaveStatus";
@@ -21,6 +22,8 @@ type Registration = {
 
 type RegistryContextValue = {
   controllers: ReadonlyMap<string, Registration>;
+  events: readonly AutoSaveLogEvent[];
+  clearLog: (statusKey?: string) => void;
   register: (
     statusKey: string,
     controller: AutoSaveController,
@@ -35,6 +38,24 @@ export type TrackedAutoSave = {
   isActive: boolean;
 };
 
+export type AutoSaveLogEventType =
+  | "change-detected"
+  | "save-started"
+  | "retry-started"
+  | "save-succeeded"
+  | "save-failed"
+  | "save-cancelled";
+
+export type AutoSaveLogEvent = {
+  id: string;
+  statusKey: string;
+  label: string;
+  type: AutoSaveLogEventType;
+  timestamp: number;
+  durationMs?: number;
+  error?: string;
+};
+
 const RegistryContext = createContext<RegistryContextValue | null>(null);
 
 function useRegistry() {
@@ -47,9 +68,71 @@ function useRegistry() {
   return registry;
 }
 
-export function AutoSaveStatusProvider({ children }: PropsWithChildren) {
+type ProviderProps = PropsWithChildren<{
+  maxLogEntries?: number;
+}>;
+
+function getEventType(
+  previous: AutoSaveSnapshot,
+  current: AutoSaveSnapshot,
+): AutoSaveLogEventType | null {
+  if (current.state === "dirty") return "change-detected";
+  if (current.state === "saving") {
+    return previous.state === "error" ? "retry-started" : "save-started";
+  }
+  if (current.state === "saved") return "save-succeeded";
+  if (current.state === "error") return "save-failed";
+  if (
+    current.state === "idle" &&
+    (previous.state === "dirty" || previous.state === "saving")
+  ) {
+    return "save-cancelled";
+  }
+  return null;
+}
+
+export function AutoSaveStatusProvider({
+  children,
+  maxLogEntries = 200,
+}: ProviderProps) {
   const [controllers, setControllers] = useState(
     () => new Map<string, Registration>(),
+  );
+  const [events, setEvents] = useState<AutoSaveLogEvent[]>([]);
+  const eventSequence = useRef(0);
+  const clearLog = useCallback(
+    (statusKey?: string) =>
+      setEvents((current) =>
+        statusKey
+          ? current.filter((event) => event.statusKey !== statusKey)
+          : [],
+      ),
+    [],
+  );
+
+  const appendEvent = useCallback(
+    (
+      statusKey: string,
+      label: string,
+      type: AutoSaveLogEventType,
+      snapshot: AutoSaveSnapshot,
+      durationMs?: number,
+    ) => {
+      const timestamp = Date.now();
+      const event: AutoSaveLogEvent = {
+        id: `${statusKey}:${timestamp}:${eventSequence.current++}`,
+        statusKey,
+        label,
+        type,
+        timestamp,
+        ...(durationMs === undefined ? {} : { durationMs }),
+        ...(snapshot.error ? { error: snapshot.error } : {}),
+      };
+      setEvents((current) =>
+        [event, ...current].slice(0, Math.max(0, maxLogEntries)),
+      );
+    },
+    [maxLogEntries],
   );
 
   const register = useCallback(
@@ -62,7 +145,27 @@ export function AutoSaveStatusProvider({ children }: PropsWithChildren) {
       }: { label?: string; retainOnUnmount?: boolean },
     ) => {
       const token = Symbol(statusKey);
+      let previousSnapshot = controller.getSnapshot();
+      let saveStartedAt: number | null = null;
       const publish = () => {
+        const snapshot = controller.getSnapshot();
+        const eventType = getEventType(previousSnapshot, snapshot);
+        if (eventType) {
+          const now = Date.now();
+          const durationMs =
+            (eventType === "save-succeeded" || eventType === "save-failed") &&
+            saveStartedAt !== null
+              ? now - saveStartedAt
+              : undefined;
+          if (eventType === "save-started" || eventType === "retry-started") {
+            saveStartedAt = now;
+          }
+          appendEvent(statusKey, label, eventType, snapshot, durationMs);
+          if (eventType === "save-succeeded" || eventType === "save-failed") {
+            saveStartedAt = null;
+          }
+        }
+        previousSnapshot = snapshot;
         setControllers((current) => {
           if (current.get(statusKey)?.token !== token) return current;
           const next = new Map(current);
@@ -70,7 +173,7 @@ export function AutoSaveStatusProvider({ children }: PropsWithChildren) {
             controller,
             isActive: true,
             label,
-            snapshot: controller.getSnapshot(),
+            snapshot,
             token,
           });
           return next;
@@ -110,12 +213,12 @@ export function AutoSaveStatusProvider({ children }: PropsWithChildren) {
         });
       };
     },
-    [],
+    [appendEvent],
   );
 
   const value = useMemo(
-    () => ({ controllers, register }),
-    [controllers, register],
+    () => ({ clearLog, controllers, events, register }),
+    [clearLog, controllers, events, register],
   );
 
   return (
@@ -176,4 +279,28 @@ export function useTrackedAutoSaves(): TrackedAutoSave[] {
       })),
     [controllers],
   );
+}
+
+type AutoSaveLogOptions = {
+  statusKey?: string;
+  limit?: number;
+};
+
+export function useAutoSaveLog({
+  statusKey,
+  limit,
+}: AutoSaveLogOptions = {}): readonly AutoSaveLogEvent[] {
+  const { events } = useRegistry();
+
+  return useMemo(() => {
+    const filtered = statusKey
+      ? events.filter((event) => event.statusKey === statusKey)
+      : events;
+    return limit === undefined ? filtered : filtered.slice(0, limit);
+  }, [events, limit, statusKey]);
+}
+
+export function useClearAutoSaveLog(statusKey?: string) {
+  const { clearLog } = useRegistry();
+  return useCallback(() => clearLog(statusKey), [clearLog, statusKey]);
 }

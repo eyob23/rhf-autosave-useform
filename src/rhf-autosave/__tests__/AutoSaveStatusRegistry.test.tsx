@@ -5,6 +5,8 @@ import {
   AutoSaveStatusProvider,
   AutoSaveStatusRegistration,
   RegisteredAutoSaveStatus,
+  useAutoSaveLog,
+  useClearAutoSaveLog,
   useTrackedAutoSaves,
 } from "../AutoSaveStatusRegistry";
 import type { AutoSaveController, AutoSaveSnapshot } from "../types";
@@ -54,6 +56,26 @@ function TrackedStatuses() {
         </li>
       ))}
     </ul>
+  );
+}
+
+function LogEvents({ statusKey }: { statusKey?: string }) {
+  const events = useAutoSaveLog({ statusKey });
+  const clearLog = useClearAutoSaveLog();
+  return (
+    <div>
+      <button type="button" onClick={clearLog}>
+        Clear
+      </button>
+      <ol>
+        {events.map((event) => (
+          <li key={event.id}>
+            {event.label}: {event.type}
+            {event.durationMs === undefined ? "" : ` (${event.durationMs}ms)`}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -154,5 +176,59 @@ describe("autosave status registry", () => {
     );
 
     expect(screen.getByText("Ada profile: saved (retained)")).toBeTruthy();
+  });
+
+  it("keeps a bounded, filterable log of state transitions", () => {
+    vi.setSystemTime(new Date("2026-08-09T12:00:00Z"));
+    const source = createController(idleSnapshot);
+    render(
+      <AutoSaveStatusProvider maxLogEntries={3}>
+        <LogEvents statusKey="profile:1" />
+        <AutoSaveStatusRegistration
+          statusKey="profile:1"
+          label="Ada profile"
+          controller={source.controller}
+        />
+      </AutoSaveStatusProvider>,
+    );
+
+    act(() => {
+      source.publish({
+        state: "dirty",
+        lastSavedAt: null,
+        saveDueAt: Date.now() + 1000,
+        error: null,
+      });
+      source.publish({
+        state: "saving",
+        lastSavedAt: null,
+        saveDueAt: null,
+        error: null,
+      });
+      vi.advanceTimersByTime(25);
+      source.publish({
+        state: "saved",
+        lastSavedAt: Date.now(),
+        saveDueAt: null,
+        error: null,
+      });
+      source.publish({
+        state: "error",
+        lastSavedAt: Date.now(),
+        saveDueAt: null,
+        error: "Offline",
+      });
+    });
+
+    expect(
+      screen.getAllByRole("listitem").map((item) => item.textContent),
+    ).toEqual([
+      "Ada profile: save-failed",
+      "Ada profile: save-succeeded (25ms)",
+      "Ada profile: save-started",
+    ]);
+
+    act(() => screen.getByRole("button", { name: "Clear" }).click());
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 });

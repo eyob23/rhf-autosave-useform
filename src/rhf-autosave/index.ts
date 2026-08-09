@@ -1,12 +1,22 @@
 export { AppExitGuard } from "./AppExitGuard";
+export {
+  AutoSaveEventLog,
+  type AutoSaveEventLogProps,
+} from "./AutoSaveEventLog";
 export { AutoSaveStatus } from "./AutoSaveStatus";
 export {
   AutoSaveStatusProvider,
   AutoSaveStatusRegistration,
   RegisteredAutoSaveStatus,
+  useAutoSaveLog,
+  useClearAutoSaveLog,
   useTrackedAutoSaves,
 } from "./AutoSaveStatusRegistry";
-export type { TrackedAutoSave } from "./AutoSaveStatusRegistry";
+export type {
+  AutoSaveLogEvent,
+  AutoSaveLogEventType,
+  TrackedAutoSave,
+} from "./AutoSaveStatusRegistry";
 export {
   TrackedAutoSaveList,
   type TrackedAutoSaveListProps,
