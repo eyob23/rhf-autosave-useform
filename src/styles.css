@@ -67,6 +67,7 @@ h3 { margin: 32px 0 0; font-size: 19px; }
 .dashboard-stats div + div { border-left: 1px solid #d5dbd4; }
 .dashboard-stats strong { font-family: Georgia, "Times New Roman", serif; font-size: 26px; font-weight: 500; }
 .dashboard-stats span { color: #66726b; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.dashboard-autosave-tracker { max-width: 1280px; margin: 0 auto 22px; }
 .dashboard-tools { max-width: 1280px; margin: 0 auto 22px; padding: 12px; display: flex; align-items: center; gap: 12px; background: #17211c; border-radius: 8px; }
 .search-field { min-width: 260px; flex: 1; display: flex; align-items: center; gap: 9px; padding: 0 12px; color: #728179; background: white; border-radius: 6px; }
 .search-field input { border: 0; padding-left: 0; box-shadow: none; }

@@ -9,7 +9,24 @@ import type { AutoSaveFunction } from "../rhf-autosave";
 import { store } from "../store";
 import { applicationApi } from "../api/service";
 
-export const applicationAutoSaveStatusKey = "active-application-section";
+export const applicationSectionNames = [
+  "personal",
+  "employment",
+  "education",
+  "references",
+] as const;
+
+export type ApplicationSectionName = (typeof applicationSectionNames)[number];
+
+export const applicationAutoSaveStatusKey = (
+  applicationId: string,
+  section: ApplicationSectionName,
+) => `application:${applicationId}:${section}`;
+
+export const applicationAutoSaveStatusLabel = (
+  applicationId: string,
+  section: ApplicationSectionName,
+) => `${applicationId} · ${section[0].toUpperCase()}${section.slice(1)}`;
 
 type AbortableRequest = {
   abort: () => void;

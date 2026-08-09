@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { emptyEducationForm, emptyEducationItem } from "../api/forms";
 import { useGetEducationQuery } from "../api/service";
 import {
+  applicationAutoSaveStatusLabel,
   applicationAutoSaveStatusKey,
   applicationSavers,
 } from "../integrations/applicationAutosave";
@@ -44,7 +45,9 @@ export function EducationSection() {
     <AutoSaveForm
       form={form}
       controller={autosave}
-      statusKey={applicationAutoSaveStatusKey}
+      statusKey={applicationAutoSaveStatusKey(applicationId, "education")}
+      statusLabel={applicationAutoSaveStatusLabel(applicationId, "education")}
+      retainStatusOnUnmount
     >
       <section className="card">
         <div className="section-heading">

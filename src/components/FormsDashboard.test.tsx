@@ -17,6 +17,12 @@ import {
   vi,
 } from "vitest";
 import type { ApplicationSummary } from "../api/mockApi";
+import {
+  AutoSaveStatusProvider,
+  AutoSaveStatusRegistration,
+  type AutoSaveController,
+  type AutoSaveSnapshot,
+} from "../rhf-autosave";
 import { FormsDashboard } from "./FormsDashboard";
 
 const api = vi.hoisted(() => ({
@@ -53,12 +59,26 @@ const application: ApplicationSummary = {
   updatedAt: "2026-08-09T12:00:00.000Z",
 };
 
-const renderDashboard = () =>
+const renderDashboard = (registrations?: React.ReactNode) =>
   render(
-    <MemoryRouter>
-      <FormsDashboard />
-    </MemoryRouter>,
+    <AutoSaveStatusProvider>
+      <MemoryRouter>
+        <FormsDashboard />
+        {registrations}
+      </MemoryRouter>
+    </AutoSaveStatusProvider>,
   );
+
+const createController = (snapshot: AutoSaveSnapshot): AutoSaveController => ({
+  initialize: vi.fn(),
+  flush: vi.fn(async () => undefined),
+  retry: vi.fn(async () => undefined),
+  flushBestEffort: vi.fn(),
+  hasUnsavedChanges: () => false,
+  isInitialized: () => true,
+  getSnapshot: () => snapshot,
+  subscribeStatus: () => () => undefined,
+});
 
 describe("FormsDashboard", () => {
   beforeAll(() => {
@@ -136,5 +156,40 @@ describe("FormsDashboard", () => {
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("shows every autosave registered in the current session", async () => {
+    const savedController = createController({
+      state: "saved",
+      lastSavedAt: Date.now(),
+      saveDueAt: null,
+      error: null,
+    });
+    const errorController = createController({
+      state: "error",
+      lastSavedAt: null,
+      saveDueAt: null,
+      error: "Connection unavailable",
+    });
+
+    renderDashboard(
+      <>
+        <AutoSaveStatusRegistration
+          statusKey="application:001:personal"
+          label="application-001 · Personal"
+          controller={savedController}
+        />
+        <AutoSaveStatusRegistration
+          statusKey="application:002:education"
+          label="application-002 · Education"
+          controller={errorController}
+        />
+      </>,
+    );
+
+    expect(await screen.findByLabelText("2 tracked autosaves")).toBeTruthy();
+    expect(screen.getByText("application-001 · Personal")).toBeTruthy();
+    expect(screen.getByText("application-002 · Education")).toBeTruthy();
+    expect(screen.getByText("Connection unavailable")).toBeTruthy();
   });
 });

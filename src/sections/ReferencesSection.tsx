@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { emptyReferencesForm } from "../api/forms";
 import { useGetReferencesQuery } from "../api/service";
 import {
+  applicationAutoSaveStatusLabel,
   applicationAutoSaveStatusKey,
   applicationSavers,
 } from "../integrations/applicationAutosave";
@@ -43,7 +44,9 @@ export function ReferencesSection() {
     <AutoSaveForm
       form={form}
       controller={autosave}
-      statusKey={applicationAutoSaveStatusKey}
+      statusKey={applicationAutoSaveStatusKey(applicationId, "references")}
+      statusLabel={applicationAutoSaveStatusLabel(applicationId, "references")}
+      retainStatusOnUnmount
     >
       <section className="card">
         <div className="section-heading">

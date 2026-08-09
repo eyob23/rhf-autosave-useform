@@ -16,6 +16,7 @@ import {
   useGetApplicationsQuery,
 } from "../api/service";
 import type { ApplicationStatus, ApplicationSummary } from "../api/mockApi";
+import { TrackedAutoSaveList } from "../rhf-autosave";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",
@@ -137,7 +138,6 @@ export function FormsDashboard() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteTriggerRef = useRef<HTMLElement | null>(null);
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
-
   const filteredApplications = applications.filter((application) => {
     const matchesStatus = status === "All" || application.status === status;
     const matchesQuery =
@@ -229,6 +229,12 @@ export function FormsDashboard() {
           </div>
         </div>
       </section>
+
+      <TrackedAutoSaveList
+        className="dashboard-autosave-tracker"
+        eyebrow="This browser session"
+        emptyMessage="Autosaves appear here after you edit an application section."
+      />
 
       <section className="dashboard-tools" aria-label="Filter forms">
         <label className="search-field">

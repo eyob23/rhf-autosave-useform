@@ -13,12 +13,16 @@ type Props<T extends FieldValues> = PropsWithChildren<{
   form: UseFormReturn<T>;
   controller: AutoSaveController;
   statusKey?: string;
+  statusLabel?: string;
+  retainStatusOnUnmount?: boolean;
 }>;
 
 export function AutoSaveForm<T extends FieldValues>({
   form,
   controller,
   statusKey,
+  statusLabel,
+  retainStatusOnUnmount,
   children,
 }: Props<T>) {
   return (
@@ -27,6 +31,8 @@ export function AutoSaveForm<T extends FieldValues>({
         <AutoSaveStatusRegistration
           statusKey={statusKey}
           controller={controller}
+          label={statusLabel}
+          retainOnUnmount={retainStatusOnUnmount}
         />
       )}
       <NavigationGuard controller={controller} />

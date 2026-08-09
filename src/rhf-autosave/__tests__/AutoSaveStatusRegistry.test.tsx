@@ -5,6 +5,7 @@ import {
   AutoSaveStatusProvider,
   AutoSaveStatusRegistration,
   RegisteredAutoSaveStatus,
+  useTrackedAutoSaves,
 } from "../AutoSaveStatusRegistry";
 import type { AutoSaveController, AutoSaveSnapshot } from "../types";
 
@@ -42,6 +43,19 @@ const idleSnapshot: AutoSaveSnapshot = {
   saveDueAt: null,
   error: null,
 };
+
+function TrackedStatuses() {
+  const statuses = useTrackedAutoSaves();
+  return (
+    <ul>
+      {statuses.map(({ statusKey, label, snapshot, isActive }) => (
+        <li key={statusKey}>
+          {label}: {snapshot.state} ({isActive ? "active" : "retained"})
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 describe("autosave status registry", () => {
   beforeEach(() => vi.useFakeTimers());
@@ -105,5 +119,40 @@ describe("autosave status registry", () => {
     );
 
     expect(screen.getByText("No active form")).toBeTruthy();
+  });
+
+  it("lists live snapshots and retains the latest status when requested", () => {
+    const source = createController(idleSnapshot);
+    const view = render(
+      <AutoSaveStatusProvider>
+        <TrackedStatuses />
+        <AutoSaveStatusRegistration
+          statusKey="profile:1"
+          label="Ada profile"
+          controller={source.controller}
+          retainOnUnmount
+        />
+      </AutoSaveStatusProvider>,
+    );
+
+    expect(screen.getByText("Ada profile: idle (active)")).toBeTruthy();
+
+    act(() => {
+      source.publish({
+        state: "saved",
+        lastSavedAt: Date.now(),
+        saveDueAt: null,
+        error: null,
+      });
+    });
+    expect(screen.getByText("Ada profile: saved (active)")).toBeTruthy();
+
+    view.rerender(
+      <AutoSaveStatusProvider>
+        <TrackedStatuses />
+      </AutoSaveStatusProvider>,
+    );
+
+    expect(screen.getByText("Ada profile: saved (retained)")).toBeTruthy();
   });
 });

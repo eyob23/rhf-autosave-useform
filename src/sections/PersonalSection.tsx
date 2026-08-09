@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { emptyPersonalForm } from "../api/forms";
 import { useGetPersonalQuery } from "../api/service";
 import {
+  applicationAutoSaveStatusLabel,
   applicationAutoSaveStatusKey,
   applicationSavers,
 } from "../integrations/applicationAutosave";
@@ -38,7 +39,9 @@ export function PersonalSection() {
     <AutoSaveForm
       form={form}
       controller={autosave}
-      statusKey={applicationAutoSaveStatusKey}
+      statusKey={applicationAutoSaveStatusKey(applicationId, "personal")}
+      statusLabel={applicationAutoSaveStatusLabel(applicationId, "personal")}
+      retainStatusOnUnmount
     >
       <section className="card">
         <div className="section-heading">

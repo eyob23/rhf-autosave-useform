@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { emptyEmploymentForm, emptyEmploymentItem } from "../api/forms";
 import { useGetEmploymentQuery } from "../api/service";
 import {
+  applicationAutoSaveStatusLabel,
   applicationAutoSaveStatusKey,
   applicationSavers,
 } from "../integrations/applicationAutosave";
@@ -40,7 +41,9 @@ export function EmploymentSection() {
     <AutoSaveForm
       form={form}
       controller={autosave}
-      statusKey={applicationAutoSaveStatusKey}
+      statusKey={applicationAutoSaveStatusKey(applicationId, "employment")}
+      statusLabel={applicationAutoSaveStatusLabel(applicationId, "employment")}
+      retainStatusOnUnmount
     >
       <section className="card">
         <div className="section-heading">

@@ -1,12 +1,27 @@
 import { ArrowLeft } from "lucide-react";
-import { Link, Navigate, NavLink, Outlet, useParams } from "react-router-dom";
-import { applicationAutoSaveStatusKey } from "./integrations/applicationAutosave";
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  useLocation,
+  useParams,
+} from "react-router-dom";
+import {
+  applicationAutoSaveStatusKey,
+  applicationSectionNames,
+} from "./integrations/applicationAutosave";
 import { RegisteredAutoSaveStatus } from "./rhf-autosave";
 import { useIsViewMode } from "./useApplicationMode";
 
 export function AppLayout() {
   const { applicationId } = useParams();
+  const { pathname } = useLocation();
   const isViewMode = useIsViewMode();
+  const activeSection =
+    applicationSectionNames.find((section) =>
+      pathname.endsWith(`/${section}`),
+    ) ?? "personal";
 
   return (
     <main className="shell">
@@ -24,7 +39,10 @@ export function AppLayout() {
           </span>
           {!isViewMode && (
             <RegisteredAutoSaveStatus
-              statusKey={applicationAutoSaveStatusKey}
+              statusKey={applicationAutoSaveStatusKey(
+                applicationId ?? "",
+                activeSection,
+              )}
               fallback={<span className="save-status muted">Ready</span>}
             />
           )}

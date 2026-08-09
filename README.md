@@ -135,6 +135,8 @@ import { AutoSaveStatusRegistration } from "rhf-autosave";
 <AutoSaveStatusRegistration
   statusKey={`profile:${profileId}`}
   controller={autosave}
+  label="Profile"
+  retainOnUnmount
 />
 ```
 
@@ -151,8 +153,48 @@ import { RegisteredAutoSaveStatus } from "rhf-autosave";
 
 The registered display includes the same live countdown, saving state, saved
 time, errors, and retry action as `AutoSaveStatus`. Multiple forms can register
-at the same time by using different keys. A registration is removed when its
-form unmounts.
+at the same time by using different keys. By default, a registration is removed
+when its form unmounts. Set `retainOnUnmount` to keep its latest snapshot for the
+current browser session.
+
+Render the reusable list to show every active or retained autosave:
+
+```tsx
+import { TrackedAutoSaveList } from "rhf-autosave";
+
+<TrackedAutoSaveList
+  title="Tracked autosaves"
+  eyebrow="This browser session"
+  emptyMessage="No drafts yet"
+/>
+```
+
+The component includes the count, active/session labels, live countdown,
+saving state, saved time, and errors. Use CSS variables such as
+`--rhf-autosave-accent-color`, `--rhf-autosave-border-color`, and
+`--rhf-autosave-success-color` to match your application.
+
+Use `useTrackedAutoSaves()` when you need a completely custom presentation:
+
+```tsx
+import { useTrackedAutoSaves } from "rhf-autosave";
+
+function AutosaveDashboard() {
+  const trackedAutoSaves = useTrackedAutoSaves();
+
+  return (
+    <ul>
+      {trackedAutoSaves.map(({ statusKey, label, snapshot, isActive }) => (
+        <li key={statusKey}>
+          <strong>{label}</strong>
+          <span>{snapshot.state}</span>
+          <span>{isActive ? "Active" : "Session"}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
 
 ## React Router
 
@@ -177,6 +219,8 @@ function ProfileRoute() {
       form={form}
       controller={autosave}
       statusKey="active-profile"
+      statusLabel="Profile"
+      retainStatusOnUnmount
     >
       <input {...form.register("firstName")} />
     </AutoSaveForm>
