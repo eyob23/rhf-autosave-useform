@@ -1,4 +1,5 @@
 import { useFieldArray } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, useParams } from "react-router-dom";
 import { emptyReferencesForm } from "../api/forms";
 import { useGetReferencesQuery } from "../api/service";
@@ -10,6 +11,7 @@ import {
 import { useAutoSaveForm } from "../rhf-autosave";
 import { AutoSaveForm } from "../rhf-autosave/react-router";
 import { useIsViewMode } from "../useApplicationMode";
+import { referencesSchema } from "../validation/applicationSchemas";
 
 export function ReferencesSection() {
   const { applicationId = "" } = useParams();
@@ -19,6 +21,7 @@ export function ReferencesSection() {
     defaultValues: emptyReferencesForm(),
     values: data,
     mode: "onBlur",
+    resolver: yupResolver(referencesSchema),
     disabled: isViewMode,
     save: applicationSavers.references(applicationId),
   });
@@ -62,28 +65,55 @@ export function ReferencesSection() {
               <legend>Reference {index + 1}</legend>
               <div className="form-grid compact">
                 <label>
-                  Name
+                  Name{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`references.${index}.name`)} />
+                  <span className="field-error">
+                    {form.formState.errors.references?.[index]?.name?.message}
+                  </span>
                 </label>
                 <label>
-                  Relationship
+                  Relationship{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     {...form.register(`references.${index}.relationship`)}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.references?.[index]?.relationship
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Email
+                  Email{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="email"
                     {...form.register(`references.${index}.email`)}
                   />
+                  <span className="field-error">
+                    {form.formState.errors.references?.[index]?.email?.message}
+                  </span>
                 </label>
                 <label>
-                  Phone
+                  Phone{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="tel"
                     {...form.register(`references.${index}.phone`)}
                   />
+                  <span className="field-error">
+                    {form.formState.errors.references?.[index]?.phone?.message}
+                  </span>
                 </label>
               </div>
               {references.fields.length > 1 && (
@@ -116,6 +146,12 @@ export function ReferencesSection() {
           <label className="checkbox full">
             <input type="checkbox" {...form.register("consentToContact")} /> I
             consent to these references being contacted
+            <span className="required-marker" aria-hidden="true">
+              *
+            </span>
+            <span className="field-error">
+              {form.formState.errors.consentToContact?.message}
+            </span>
           </label>
           <label className="full">
             Additional notes

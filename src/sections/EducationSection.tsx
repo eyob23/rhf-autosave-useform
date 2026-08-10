@@ -1,4 +1,5 @@
 import { useFieldArray } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, useParams } from "react-router-dom";
 import { emptyEducationForm, emptyEducationItem } from "../api/forms";
 import { useGetEducationQuery } from "../api/service";
@@ -10,6 +11,7 @@ import {
 import { useAutoSaveForm } from "../rhf-autosave";
 import { AutoSaveForm } from "../rhf-autosave/react-router";
 import { useIsViewMode } from "../useApplicationMode";
+import { educationSchema } from "../validation/applicationSchemas";
 
 export function EducationSection() {
   const { applicationId = "" } = useParams();
@@ -19,6 +21,7 @@ export function EducationSection() {
     defaultValues: emptyEducationForm(),
     values: data,
     mode: "onBlur",
+    resolver: yupResolver(educationSchema),
     disabled: isViewMode,
     save: applicationSavers.education(applicationId),
   });
@@ -59,7 +62,10 @@ export function EducationSection() {
         </div>
         <div className="form-grid">
           <label className="full">
-            Highest education level
+            Highest education level{" "}
+            <span className="required-marker" aria-hidden="true">
+              *
+            </span>
             <select {...form.register("highestLevel")}>
               <option value="">Select a level</option>
               <option>High school</option>
@@ -68,6 +74,9 @@ export function EducationSection() {
               <option>Master's degree</option>
               <option>Doctorate</option>
             </select>
+            <span className="field-error">
+              {form.formState.errors.highestLevel?.message}
+            </span>
           </label>
         </div>
         <div className="array-list">
@@ -76,23 +85,53 @@ export function EducationSection() {
               <legend>Education {index + 1}</legend>
               <div className="form-grid compact">
                 <label>
-                  Institution
+                  Institution{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`education.${index}.institution`)} />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.education?.[index]?.institution
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Qualification
+                  Qualification{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     {...form.register(`education.${index}.qualification`)}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.education?.[index]?.qualification
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Field of study
+                  Field of study{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     {...form.register(`education.${index}.fieldOfStudy`)}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.education?.[index]?.fieldOfStudy
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Graduation year
+                  Graduation year{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="number"
                     {...form.register(`education.${index}.graduationYear`, {
@@ -100,6 +139,12 @@ export function EducationSection() {
                         value === "" ? null : Number(value),
                     })}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.education?.[index]?.graduationYear
+                        ?.message
+                    }
+                  </span>
                 </label>
               </div>
               {education.fields.length > 1 && (
@@ -128,19 +173,46 @@ export function EducationSection() {
               <legend>Certification {index + 1}</legend>
               <div className="form-grid compact">
                 <label>
-                  Name
+                  Name{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`certifications.${index}.name`)} />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.certifications?.[index]?.name
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Issuer
+                  Issuer{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`certifications.${index}.issuer`)} />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.certifications?.[index]?.issuer
+                        ?.message
+                    }
+                  </span>
                 </label>
                 <label>
-                  Expiration date
+                  Expiration date{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="date"
                     {...form.register(`certifications.${index}.expiresOn`)}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.certifications?.[index]?.expiresOn
+                        ?.message
+                    }
+                  </span>
                 </label>
               </div>
               <button

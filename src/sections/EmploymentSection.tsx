@@ -1,4 +1,5 @@
 import { useFieldArray } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, useParams } from "react-router-dom";
 import { emptyEmploymentForm, emptyEmploymentItem } from "../api/forms";
 import { useGetEmploymentQuery } from "../api/service";
@@ -10,6 +11,7 @@ import {
 import { useAutoSaveForm } from "../rhf-autosave";
 import { AutoSaveForm } from "../rhf-autosave/react-router";
 import { useIsViewMode } from "../useApplicationMode";
+import { employmentSchema } from "../validation/applicationSchemas";
 
 export function EmploymentSection() {
   const { applicationId = "" } = useParams();
@@ -19,6 +21,7 @@ export function EmploymentSection() {
     defaultValues: emptyEmploymentForm(),
     values: data,
     mode: "onBlur",
+    resolver: yupResolver(employmentSchema),
     disabled: isViewMode,
     save: applicationSavers.employment(applicationId),
   });
@@ -55,13 +58,19 @@ export function EmploymentSection() {
         </div>
         <div className="form-grid">
           <label className="full">
-            Current status
+            Current status{" "}
+            <span className="required-marker" aria-hidden="true">
+              *
+            </span>
             <select {...form.register("employmentStatus")}>
               <option value="employed">Employed</option>
               <option value="self-employed">Self-employed</option>
               <option value="unemployed">Unemployed</option>
               <option value="student">Student</option>
             </select>
+            <span className="field-error">
+              {form.formState.errors.employmentStatus?.message}
+            </span>
           </label>
         </div>
         <div className="array-list">
@@ -70,27 +79,51 @@ export function EmploymentSection() {
               <legend>Role {index + 1}</legend>
               <div className="form-grid compact">
                 <label>
-                  Employer
+                  Employer{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`history.${index}.employer`)} />
+                  <span className="field-error">
+                    {form.formState.errors.history?.[index]?.employer?.message}
+                  </span>
                 </label>
                 <label>
-                  Job title
+                  Job title{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input {...form.register(`history.${index}.title`)} />
+                  <span className="field-error">
+                    {form.formState.errors.history?.[index]?.title?.message}
+                  </span>
                 </label>
                 <label>
-                  Start date
+                  Start date{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="date"
                     {...form.register(`history.${index}.startDate`)}
                   />
+                  <span className="field-error">
+                    {form.formState.errors.history?.[index]?.startDate?.message}
+                  </span>
                 </label>
                 <label>
-                  End date
+                  End date{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <input
                     type="date"
                     disabled={form.watch(`history.${index}.current`)}
                     {...form.register(`history.${index}.endDate`)}
                   />
+                  <span className="field-error">
+                    {form.formState.errors.history?.[index]?.endDate?.message}
+                  </span>
                 </label>
                 <label className="checkbox full">
                   <input
@@ -100,11 +133,20 @@ export function EmploymentSection() {
                   I currently work here
                 </label>
                 <label className="full">
-                  Key responsibilities
+                  Key responsibilities{" "}
+                  <span className="required-marker" aria-hidden="true">
+                    *
+                  </span>
                   <textarea
                     rows={3}
                     {...form.register(`history.${index}.responsibilities`)}
                   />
+                  <span className="field-error">
+                    {
+                      form.formState.errors.history?.[index]?.responsibilities
+                        ?.message
+                    }
+                  </span>
                 </label>
               </div>
               {history.fields.length > 1 && (
