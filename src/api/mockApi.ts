@@ -39,6 +39,8 @@ export type ApplicationSummary = {
   updatedAt: string;
 };
 
+const dbStorageKey = "rhf-autosave-application-db-v1";
+
 const sleep = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const id = window.setTimeout(resolve, ms);
@@ -233,18 +235,54 @@ const seededApplications: Array<
   ],
 ];
 
-seededApplications.forEach(
-  ([id, firstName, lastName, title, status, updatedAt]) => {
-    db.set(
-      id,
-      createApplication(id, firstName, lastName, title, status, updatedAt),
-    );
-  },
-);
+const canUseStorage = () => typeof window !== "undefined";
+
+const persistDb = () => {
+  if (!canUseStorage()) return;
+  try {
+    const records = Array.from(db.values());
+    window.localStorage.setItem(dbStorageKey, JSON.stringify(records));
+  } catch {
+    // Ignore persistence errors (e.g. private mode quota restrictions).
+  }
+};
+
+const hydrateDb = () => {
+  if (!canUseStorage()) return false;
+  try {
+    const stored = window.localStorage.getItem(dbStorageKey);
+    if (!stored) return false;
+    const records = JSON.parse(stored) as ApplicationRecord[];
+    if (!Array.isArray(records) || records.length === 0) return false;
+    db.clear();
+    for (const record of records) {
+      if (!record || typeof record.id !== "string") continue;
+      db.set(record.id, record);
+    }
+    return db.size > 0;
+  } catch {
+    return false;
+  }
+};
+
+if (!hydrateDb()) {
+  db.clear();
+  seededApplications.forEach(
+    ([id, firstName, lastName, title, status, updatedAt]) => {
+      db.set(
+        id,
+        createApplication(id, firstName, lastName, title, status, updatedAt),
+      );
+    },
+  );
+  persistDb();
+}
 
 const getApplication = (applicationId: string) => {
-  if (!db.has(applicationId))
+  if (!db.has(applicationId)) {
     db.set(applicationId, createApplication(applicationId));
+    persistDb();
+  }
   return db.get(applicationId)!;
 };
 
@@ -273,6 +311,7 @@ const saveSection = async <K extends keyof ApplicationRecord>(
       const application = getApplication(applicationId);
       application[section] = structuredClone(data);
       application.updatedAt = new Date().toISOString();
+      persistDb();
     },
     650,
   );
@@ -309,11 +348,13 @@ export const mockApi = {
       "New application",
     );
     db.set(applicationId, application);
+    persistDb();
     return toSummary(application);
   },
   deleteApplication: async (applicationId: string) => {
     await sleep(250);
     db.delete(applicationId);
+    persistDb();
   },
   getPersonal: (applicationId: string, signal?: AbortSignal) =>
     getSection(applicationId, "personal", signal),
