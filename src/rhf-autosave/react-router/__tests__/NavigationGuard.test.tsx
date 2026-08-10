@@ -145,6 +145,35 @@ describe("NavigationGuard", () => {
     expect(screen.queryByText("Saving changes before leaving")).toBeNull();
   });
 
+  it("allows immediate navigation without waiting for autosave", async () => {
+    const pendingSave = deferred<void>();
+    const save = vi.fn(() => pendingSave.promise);
+    const router = createMemoryRouter(
+      [
+        { path: "/edit", element: <Editor save={save} /> },
+        { path: "/destination", element: <h1>Destination</h1> },
+      ],
+      { initialEntries: ["/edit"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Name" }), {
+      target: { value: "Grace" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "Leave editor" }));
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Navigate without saving",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Destination" }),
+    ).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/destination");
+  });
+
   it("flushes before same-path query navigation", async () => {
     const save = vi.fn(async (_values: Values) => undefined);
     const router = createMemoryRouter(

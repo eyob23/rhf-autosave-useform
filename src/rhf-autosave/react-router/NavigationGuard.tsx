@@ -80,6 +80,13 @@ export function NavigationGuard({ controller }: Props) {
       // The controller publishes the error for this notice and status UI.
     });
   };
+  const navigateWithoutSaving = () => {
+    // Skip autosave for this attempt and continue immediately.
+    attemptRef.current += 1;
+    flushingRef.current = false;
+    waitingForRetryRef.current = false;
+    blocker.proceed();
+  };
 
   return (
     <div
@@ -109,6 +116,13 @@ export function NavigationGuard({ controller }: Props) {
         </span>
       </div>
       <div className="rhf-autosave-navigation-guard__actions">
+        <button
+          type="button"
+          className="is-secondary"
+          onClick={navigateWithoutSaving}
+        >
+          Navigate without saving
+        </button>
         {hasError && (
           <button type="button" onClick={retryAndContinue} autoFocus>
             Retry and continue
