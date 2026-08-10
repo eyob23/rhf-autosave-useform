@@ -12,7 +12,7 @@ export function AutoSaveStatus({ controller }: Props) {
     if (snapshot.state !== "dirty" || snapshot.saveDueAt === null) return;
 
     setNow(Date.now());
-    const interval = window.setInterval(() => setNow(Date.now()), 100);
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [snapshot.saveDueAt, snapshot.state]);
 
@@ -41,7 +41,7 @@ export function AutoSaveStatus({ controller }: Props) {
     content = (
       <>
         <span aria-hidden="true">
-          Autosaving in {remainingSeconds.toFixed(1)}s
+          Autosaving in {remainingSeconds.toFixed(0)}s
         </span>
         <button type="button" className="force-save-button" onClick={forceSave}>
           Save now

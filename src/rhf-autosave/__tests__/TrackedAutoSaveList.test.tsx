@@ -90,9 +90,12 @@ describe("TrackedAutoSaveList", () => {
         error: null,
       });
     });
-    expect(screen.getByText("Autosaving in 1.0s")).toBeTruthy();
+    expect(screen.getByText("Autosaving in 1s")).toBeTruthy();
 
     act(() => vi.advanceTimersByTime(500));
-    expect(screen.getByText("Autosaving in 0.5s")).toBeTruthy();
+    expect(screen.getByText("Autosaving in 1s")).toBeTruthy();
+
+    act(() => vi.advanceTimersByTime(500));
+    expect(screen.getByText("Autosaving in 0s")).toBeTruthy();
   });
 });

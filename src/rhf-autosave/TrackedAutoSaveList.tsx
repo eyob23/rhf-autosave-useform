@@ -17,7 +17,7 @@ function TrackedAutoSaveState({ tracked, formatSavedAt }: TrackedStateProps) {
   useEffect(() => {
     if (snapshot.state !== "dirty" || snapshot.saveDueAt === null) return;
     setNow(Date.now());
-    const interval = window.setInterval(() => setNow(Date.now()), 100);
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [snapshot.saveDueAt, snapshot.state]);
 
@@ -26,7 +26,7 @@ function TrackedAutoSaveState({ tracked, formatSavedAt }: TrackedStateProps) {
       snapshot.saveDueAt === null
         ? 0
         : Math.max(0, snapshot.saveDueAt - now) / 1000;
-    return <>Autosaving in {remainingSeconds.toFixed(1)}s</>;
+    return <>Autosaving in {remainingSeconds.toFixed(0)}s</>;
   }
   if (snapshot.state === "saving") return <>Saving...</>;
   if (snapshot.state === "error") {

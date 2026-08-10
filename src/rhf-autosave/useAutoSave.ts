@@ -57,7 +57,7 @@ const defaultFormatError = (error: unknown) => {
 export function useAutoSave<T extends FieldValues>({
   form,
   save,
-  debounceMs = 1000,
+  debounceMs = 20000,
   requestTimeoutMs = 15000,
   snapshot = (values) => structuredClone(values) as T,
   formatError = defaultFormatError,
