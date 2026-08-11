@@ -24,6 +24,10 @@ export function PersonalSection() {
     disabled: isViewMode,
     save: applicationSavers.personal(applicationId),
   });
+  const saveNow = async () => {
+    void form.trigger();
+    await autosave.forceSave();
+  };
 
   if (isLoading)
     return (
@@ -183,6 +187,9 @@ export function PersonalSection() {
         </div>
         <div className="actions">
           <span />
+          <button type="button" className="button secondary" onClick={saveNow}>
+            Save now
+          </button>
           <Link className="button" to="../employment">
             Next: Employment
           </Link>

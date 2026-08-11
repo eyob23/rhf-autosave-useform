@@ -25,6 +25,10 @@ export function EmploymentSection() {
     disabled: isViewMode,
     save: applicationSavers.employment(applicationId),
   });
+  const saveNow = async () => {
+    void form.trigger();
+    await autosave.forceSave();
+  };
   const history = useFieldArray({ control: form.control, name: "history" });
 
   if (isLoading)
@@ -172,6 +176,9 @@ export function EmploymentSection() {
           <Link className="button secondary" to="../personal">
             Personal
           </Link>
+          <button type="button" className="button secondary" onClick={saveNow}>
+            Save now
+          </button>
           <Link className="button" to="../education">
             Next: Education
           </Link>

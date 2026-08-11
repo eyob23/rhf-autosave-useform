@@ -153,4 +153,23 @@ describe("useAutoSave", () => {
       "Validation failed",
     );
   });
+
+  it("force-saves the current form values even when nothing is dirty", async () => {
+    const snapshots: TestValues[] = [];
+    const save = vi.fn(async (values: TestValues) => {
+      snapshots.push(values);
+    });
+    const { result } = renderHook(() => useHarness(save));
+
+    await act(async () => {
+      await result.current.controller.forceSave();
+    });
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(snapshots[0]).toEqual(initialValues());
+    expect(result.current.controller.getSnapshot()).toMatchObject({
+      state: "saved",
+      error: null,
+    });
+  });
 });

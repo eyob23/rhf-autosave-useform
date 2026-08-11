@@ -25,6 +25,10 @@ export function ReferencesSection() {
     disabled: isViewMode,
     save: applicationSavers.references(applicationId),
   });
+  const saveNow = async () => {
+    void form.trigger();
+    await autosave.forceSave();
+  };
   const references = useFieldArray({
     control: form.control,
     name: "references",
@@ -162,11 +166,7 @@ export function ReferencesSection() {
           <Link className="button secondary" to="../education">
             Education
           </Link>
-          <button
-            type="button"
-            className="button"
-            onClick={() => void autosave.flush().catch(() => undefined)}
-          >
+          <button type="button" className="button" onClick={saveNow}>
             Save now
           </button>
         </div>

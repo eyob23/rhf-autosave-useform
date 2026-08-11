@@ -17,6 +17,7 @@ function createController(initialSnapshot: AutoSaveSnapshot) {
   const controller: AutoSaveController = {
     initialize: vi.fn(),
     flush: vi.fn(async () => undefined),
+    forceSave: vi.fn(async () => undefined),
     retry: vi.fn(async () => undefined),
     flushBestEffort: vi.fn(),
     hasUnsavedChanges: () => snapshot.state === "dirty",

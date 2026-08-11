@@ -99,127 +99,130 @@ export function useAutoSave<T extends FieldValues>({
     [],
   );
 
-  const saveLatest = useCallback(async () => {
-    if (inFlightRef.current) {
-      return inFlightRef.current;
-    }
-    if (savedRevisionRef.current >= revisionRef.current) {
-      return;
-    }
+  const saveLatest = useCallback(
+    async (force = false) => {
+      if (inFlightRef.current) {
+        return inFlightRef.current;
+      }
+      if (!force && savedRevisionRef.current >= revisionRef.current) {
+        return;
+      }
 
-    // Capture the latest form values once per save attempt so retries and
-    // overlapping edits do not read a moving target.
-    const targetRevision = revisionRef.current;
-    let values: T;
-    try {
-      values = snapshotValuesRef.current(form.getValues());
-    } catch (error) {
+      // Capture the latest form values once per save attempt so retries and
+      // overlapping edits do not read a moving target.
+      const targetRevision = revisionRef.current;
+      let values: T;
+      try {
+        values = snapshotValuesRef.current(form.getValues());
+      } catch (error) {
+        publish({
+          ...snapshotRef.current,
+          state: "error",
+          saveDueAt: null,
+          error: formatErrorRef.current(error),
+        });
+        throw error;
+      }
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
       publish({
         ...snapshotRef.current,
-        state: "error",
+        state: "saving",
         saveDueAt: null,
-        error: formatErrorRef.current(error),
+        error: null,
       });
-      throw error;
-    }
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
 
-    publish({
-      ...snapshotRef.current,
-      state: "saving",
-      saveDueAt: null,
-      error: null,
-    });
+      const request = (async () => {
+        let didSave = false;
+        let didTimeOut = false;
+        let timeoutId: number | null = null;
+        try {
+          await Promise.race([
+            saveRef.current(values, abortController.signal),
+            new Promise<never>((_, reject) => {
+              timeoutId = window.setTimeout(() => {
+                didTimeOut = true;
+                abortController.abort();
+                reject(
+                  new Error(
+                    "Autosave timed out. Check your connection and retry.",
+                  ),
+                );
+              }, requestTimeoutMs);
+            }),
+          ]);
+          didSave = true;
+          savedRevisionRef.current = Math.max(
+            savedRevisionRef.current,
+            targetRevision,
+          );
 
-    const request = (async () => {
-      let didSave = false;
-      let didTimeOut = false;
-      let timeoutId: number | null = null;
-      try {
-        await Promise.race([
-          saveRef.current(values, abortController.signal),
-          new Promise<never>((_, reject) => {
-            timeoutId = window.setTimeout(() => {
-              didTimeOut = true;
-              abortController.abort();
-              reject(
-                new Error(
-                  "Autosave timed out. Check your connection and retry.",
-                ),
-              );
-            }, requestTimeoutMs);
-          }),
-        ]);
-        didSave = true;
-        savedRevisionRef.current = Math.max(
-          savedRevisionRef.current,
-          targetRevision,
-        );
-
-        if (savedRevisionRef.current >= revisionRef.current) {
-          publish({
-            state: "saved",
-            lastSavedAt: Date.now(),
-            saveDueAt: null,
-            error: null,
-          });
-        } else {
-          publish({
-            ...snapshotRef.current,
-            state: "dirty",
-            saveDueAt: null,
-            error: null,
-          });
-        }
-      } catch (error) {
-        if (!disposedRef.current) {
-          publish({
-            ...snapshotRef.current,
-            state: "error",
-            saveDueAt: null,
-            error: didTimeOut
-              ? "Autosave timed out. Check your connection and retry."
-              : formatErrorRef.current(error),
-          });
-        }
-        throw error;
-      } finally {
-        if (timeoutId !== null) window.clearTimeout(timeoutId);
-        if (abortControllerRef.current === abortController) {
-          abortControllerRef.current = null;
-        }
-        inFlightRef.current = null;
-
-        // If the user edited while this request was in flight and their
-        // debounce fired before the request completed, make sure those newer
-        // revisions still get another autosave.
-        if (
-          didSave &&
-          !disposedRef.current &&
-          savedRevisionRef.current < revisionRef.current &&
-          timerRef.current === null
-        ) {
-          const saveDueAt = Date.now() + debounceMs;
-          timerRef.current = window.setTimeout(() => {
-            timerRef.current = null;
-            void saveLatest().catch(() => {
-              // Error state is published by saveLatest.
+          if (savedRevisionRef.current >= revisionRef.current) {
+            publish({
+              state: "saved",
+              lastSavedAt: Date.now(),
+              saveDueAt: null,
+              error: null,
             });
-          }, debounceMs);
-          publish({
-            ...snapshotRef.current,
-            state: "dirty",
-            saveDueAt,
-            error: null,
-          });
-        }
-      }
-    })();
+          } else {
+            publish({
+              ...snapshotRef.current,
+              state: "dirty",
+              saveDueAt: null,
+              error: null,
+            });
+          }
+        } catch (error) {
+          if (!disposedRef.current) {
+            publish({
+              ...snapshotRef.current,
+              state: "error",
+              saveDueAt: null,
+              error: didTimeOut
+                ? "Autosave timed out. Check your connection and retry."
+                : formatErrorRef.current(error),
+            });
+          }
+          throw error;
+        } finally {
+          if (timeoutId !== null) window.clearTimeout(timeoutId);
+          if (abortControllerRef.current === abortController) {
+            abortControllerRef.current = null;
+          }
+          inFlightRef.current = null;
 
-    inFlightRef.current = request;
-    return request;
-  }, [debounceMs, form, publish, requestTimeoutMs]);
+          // If the user edited while this request was in flight and their
+          // debounce fired before the request completed, make sure those newer
+          // revisions still get another autosave.
+          if (
+            didSave &&
+            !disposedRef.current &&
+            savedRevisionRef.current < revisionRef.current &&
+            timerRef.current === null
+          ) {
+            const saveDueAt = Date.now() + debounceMs;
+            timerRef.current = window.setTimeout(() => {
+              timerRef.current = null;
+              void saveLatest().catch(() => {
+                // Error state is published by saveLatest.
+              });
+            }, debounceMs);
+            publish({
+              ...snapshotRef.current,
+              state: "dirty",
+              saveDueAt,
+              error: null,
+            });
+          }
+        }
+      })();
+
+      inFlightRef.current = request;
+      return request;
+    },
+    [debounceMs, form, publish, requestTimeoutMs],
+  );
 
   const scheduleSave = useCallback(() => {
     cancelTimer();
@@ -253,6 +256,11 @@ export function useAutoSave<T extends FieldValues>({
       cancelTimer();
       await saveLatest();
     }
+  }, [cancelTimer, saveLatest]);
+
+  const forceSave = useCallback(async () => {
+    cancelTimer();
+    await saveLatest(true);
   }, [cancelTimer, saveLatest]);
 
   const retry = useCallback(async () => {
@@ -309,6 +317,7 @@ export function useAutoSave<T extends FieldValues>({
     () => ({
       initialize,
       flush,
+      forceSave,
       retry,
       flushBestEffort,
       hasUnsavedChanges,
@@ -321,6 +330,6 @@ export function useAutoSave<T extends FieldValues>({
         };
       },
     }),
-    [flush, flushBestEffort, hasUnsavedChanges, initialize, retry],
+    [flush, flushBestEffort, forceSave, hasUnsavedChanges, initialize, retry],
   );
 }

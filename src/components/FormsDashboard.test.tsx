@@ -72,6 +72,7 @@ const renderDashboard = (registrations?: React.ReactNode) =>
 const createController = (snapshot: AutoSaveSnapshot): AutoSaveController => ({
   initialize: vi.fn(),
   flush: vi.fn(async () => undefined),
+  forceSave: vi.fn(async () => undefined),
   retry: vi.fn(async () => undefined),
   flushBestEffort: vi.fn(),
   hasUnsavedChanges: () => false,

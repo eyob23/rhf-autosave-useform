@@ -10,6 +10,7 @@ export type AutoSaveSnapshot = {
 export type AutoSaveController = {
   initialize: () => void;
   flush: () => Promise<void>;
+  forceSave: () => Promise<void>;
   retry: () => Promise<void>;
   flushBestEffort: () => void;
   hasUnsavedChanges: () => boolean;

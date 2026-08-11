@@ -25,6 +25,10 @@ export function EducationSection() {
     disabled: isViewMode,
     save: applicationSavers.education(applicationId),
   });
+  const saveNow = async () => {
+    void form.trigger();
+    await autosave.forceSave();
+  };
   const education = useFieldArray({ control: form.control, name: "education" });
   const certifications = useFieldArray({
     control: form.control,
@@ -238,6 +242,9 @@ export function EducationSection() {
           <Link className="button secondary" to="../employment">
             Employment
           </Link>
+          <button type="button" className="button secondary" onClick={saveNow}>
+            Save now
+          </button>
           <Link className="button" to="../references">
             Next: References
           </Link>

@@ -17,7 +17,7 @@ export function AutoSaveStatus({ controller }: Props) {
   }, [snapshot.saveDueAt, snapshot.state]);
 
   const forceSave = () => {
-    void controller.flush().catch(() => {
+    void controller.forceSave().catch(() => {
       // The controller publishes the error for the status UI.
     });
   };
